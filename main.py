@@ -106,7 +106,7 @@ def run(start="2021-10-8 20:00:00",end="2021-10-15 20:00:00"):
     hasura_queries = []
     for k,v in sheets.items():
         hasura_queries.append(v[1])
-    with st.spinner('wait for it ...'):
+    with st.spinner('wait for it ... about 2 minutes...'):
         r = run_np(auth_file="",
                         table_url=target_table_url,
                         col_name=v[0],
@@ -139,7 +139,7 @@ if button_click == True:
             )
     st.write(df)
 
-print("waiting....🔞🔞🔞🔞🔞")
+# print("waiting....🔞🔞🔞🔞🔞")
 
 
 
