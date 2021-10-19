@@ -44,18 +44,32 @@ task_runs_aggregate(where: {finished_at: {_gte: $start_time}, _and: {finished_at
 
 # 统计某个时间段内的某个工作池完成量并且方向为forward（去重、总量）
 query_of_finished_and_forward_count_all='''
-query query_of_finished_and_forward_count_all($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10){
-  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} }} }}}){
-    aggregate{
+query query_of_finished_and_forward_count_all(
+  $start_time: timestamptz = ""
+  $end_time: timestamptz = ""
+  $pool_ids: [Int!] = 10
+) {
+  tasks_aggregate(
+    where: {
+      task_runs: {
+        finished_at: { _gte: $start_time, _lte: $end_time }
+        pool_id: { _in: $pool_ids }
+        task_run_submit_direction: { _eq: FORWARD }
+        task_run_status: { _in:  [SUBMITTED,FINISHED]}
+      }
+    }
+  ) {
+    aggregate {
       count
     }
   }
-}'''
+}
+'''
 
 # 统计某个时间段内的某个工作池完成量并且方向为forward（去重、还在工作池）
 query_of_finished_and_forward_and_not_moved_count='''
 query query_of_finished_and_forward_and_not_moved_count($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10){
-  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} _and:{task_run_status:{_neq:FINISHED}}}} }}}){
+  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} _and:{task_run_status:{_eq:SUBMITTED}}}} }}}){
     aggregate{
       count
     }
@@ -121,14 +135,14 @@ except:
 hasura_queries = []
 for k,v in sheets.items():
     hasura_queries.append(v[1])
-
+project_name = "SQ-OD融合点云"
 r = run_np(auth_file=auth_file,
                 table_url=target_table_url,
                 col_name=v[0],
                 start=start_time, 
                 end=end_time,
                 hasura_queries=hasura_queries,
-                hasura_variables=s_e_p_variables)
+                hasura_variables=s_e_p_variables,project_name=project_name)
 columns = ["项目名称","项目类型"]+[k for k in sheets.keys()] + ["帧数--"+k for k in sheets.keys()]
 print(columns)
 write_csv(to,sheet_name="sheet_name",data=pd.DataFrame(r),header=columns)

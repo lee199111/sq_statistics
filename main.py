@@ -101,7 +101,7 @@ def convert_df(df):
     return df.to_csv().encode('utf-8')
 
 
-def run(start="2021-10-8 20:00:00",end="2021-10-15 20:00:00"):
+def run(start,end,project_name):
     result = {}
     hasura_queries = []
     for k,v in sheets.items():
@@ -112,7 +112,8 @@ def run(start="2021-10-8 20:00:00",end="2021-10-15 20:00:00"):
                     start=start, 
                     end=end,
                     hasura_queries=hasura_queries,
-                    hasura_variables=s_e_p_variables)
+                    hasura_variables=s_e_p_variables,
+                    project_name=project_name)
     return r
     
 
@@ -121,9 +122,10 @@ today = str(datetime.date.today())
 yestoday = str(datetime.date.today() - datetime.timedelta(1))
 t1 = st.text_input('开始时间',value=yestoday+' 20:00:00')
 t2 = st.text_input('截止时间',value=today+' 20:00:00')
+project_name = st.text_input("输入项目名称（完全匹配，可选）")
 button_click = st.button("查询",)
 if button_click == True:
-    r = run(t1,t2)
+    r = run(t1,t2,project_name)
     columns = ["项目名称","项目类型"]+[k for k in sheets.keys()] + ["帧数--"+k for k in sheets.keys()]
     # print(columns)
     # write_csv(to,sheet_name="sheet_name",data=pd.DataFrame(r),header=columns)
@@ -136,7 +138,7 @@ if button_click == True:
             mime='text/csv',
             )
     st.write(df)
-    st.balloons()
+    
 
 # print("waiting....🔞🔞🔞🔞🔞")
 

@@ -20,7 +20,7 @@ def col_type(result,row,col_name):
     # print(row,"🐔",results[row]["properties"][col_name]["type"])
     return result[row]["properties"][col_name]["type"]
 
-def read_table(url_read,token,col_name):
+def read_table(url_read,token,col_name,project_name=""):
     headers = {
         "Authorization": "Bearer {NOTION_KEY}".format(NOTION_KEY=token),
         "Content-Type": "application/json",
@@ -41,11 +41,18 @@ def read_table(url_read,token,col_name):
             # print(frame)
             # print(results[i]["properties"]["项目类型"])
             if key not in projects_info.keys():
-                if frame == 1:
-                    projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
+                if project_name == "":
+                    if frame == 1:
+                        projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
+                    else:
+                        projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"帧"]
+                elif key == project_name:
+                    if frame == 1:
+                        projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
+                    else:
+                        projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"帧"]
                 else:
-                    projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"帧"]
-                    
+                    pass
                 # break
             else:
                 print("😂")
@@ -100,11 +107,11 @@ def auth(file):
     return url,pwd,token
 
 
-def run(auth_file,table_url,col_name,start,end,hasura_query,hasura_variables):
+def run(auth_file,table_url,col_name,start,end,hasura_query,hasura_variables,project_name):
     results = {"项目名称":[],"张数总计":[],"项目类型":[]}
     results_sum = {}
     hasura_url,hasura_pwd,notion_token = auth(auth_file)  #读取token之类的东西
-    notion_results = read_table(table_url,notion_token,col_name=col_name) # 从 notion 读取必要数据
+    notion_results = read_table(table_url,notion_token,col_name=col_name,project_name=project_name) # 从 notion 读取必要数据
     for k,v in notion_results.items():
         hasura_variables["start_time"] = start
         hasura_variables["end_time"] = end
@@ -124,10 +131,10 @@ def run(auth_file,table_url,col_name,start,end,hasura_query,hasura_variables):
             results_sum[v[1]][0] += count
     return results,results_sum
         
-def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variables):
+def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variables,project_name):
     results = []
     hasura_url,hasura_pwd,notion_token = auth(auth_file)  #读取token之类的东西
-    notion_results = read_table(table_url,notion_token,col_name=col_name) # 从 notion 读取必要数据
+    notion_results = read_table(table_url,notion_token,col_name=col_name,project_name=project_name) # 从 notion 读取必要数据
     progress = 0
     bar = st.progress(progress)
     step = round(1/len(notion_results),3)
