@@ -106,24 +106,22 @@ def run(start="2021-10-8 20:00:00",end="2021-10-15 20:00:00"):
     hasura_queries = []
     for k,v in sheets.items():
         hasura_queries.append(v[1])
-    with st.spinner('wait for it ... about 2 minutes...'):
-        r = run_np(auth_file="",
-                        table_url=target_table_url,
-                        col_name=v[0],
-                        start=start, 
-                        end=end,
-                        hasura_queries=hasura_queries,
-                        hasura_variables=s_e_p_variables)
-    st.success('Done!')
+    r = run_np(auth_file="",
+                    table_url=target_table_url,
+                    col_name=v[0],
+                    start=start, 
+                    end=end,
+                    hasura_queries=hasura_queries,
+                    hasura_variables=s_e_p_variables)
     return r
     
 
 st.title('上汽统计')
 today = str(datetime.date.today())
 yestoday = str(datetime.date.today() - datetime.timedelta(1))
-t1 = st.text_input('start',value=yestoday+' 20:00:00')
-t2 = st.text_input('end',value=today+' 20:00:00')
-button_click = st.button("确认",)
+t1 = st.text_input('开始时间',value=yestoday+' 20:00:00')
+t2 = st.text_input('截止时间',value=today+' 20:00:00')
+button_click = st.button("查询",)
 if button_click == True:
     r = run(t1,t2)
     columns = ["项目名称","项目类型"]+[k for k in sheets.keys()] + ["帧数--"+k for k in sheets.keys()]
@@ -138,6 +136,7 @@ if button_click == True:
             mime='text/csv',
             )
     st.write(df)
+    st.balloons()
 
 # print("waiting....🔞🔞🔞🔞🔞")
 

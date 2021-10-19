@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 import streamlit as st
+from streamlit.proto.Progress_pb2 import Progress
 
 def confirm_choice(msg):
     confirm = input("[c]Confirm: {}".format(msg))
@@ -44,7 +45,8 @@ def read_table(url_read,token,col_name):
                     projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
                 else:
                     projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"帧"]
-                # break
+                    
+                break
             else:
                 print("😂")
         except:
@@ -126,6 +128,9 @@ def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variable
     results = []
     hasura_url,hasura_pwd,notion_token = auth(auth_file)  #读取token之类的东西
     notion_results = read_table(table_url,notion_token,col_name=col_name) # 从 notion 读取必要数据
+    progress = 0
+    bar = st.progress(progress)
+    step = round(1/len(notion_results),3)
     for k,v in notion_results.items():
         temp = []
         temp_frame = []
@@ -134,15 +139,21 @@ def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variable
         hasura_variables["pool_ids"] = v[0]
         temp.append(k)
         temp.append(v[1])
+        
         for hasura_query in hasura_queries:
             r = get_result_from_hasura(url=hasura_url,pwd=hasura_pwd,query=hasura_query,variables=hasura_variables)  # 请求 hasura
             count = list(r["data"].values())[0]['aggregate']['count']
             temp.append(count)
             frame_count = count * v[2]
-            print(count,'   ',v[2],'   ',count*v[2])
+            # print(count,'   ',v[2],'   ',count*v[2])
             temp_frame.append(frame_count)
         temp = temp + temp_frame
         results.append(temp)
+        progress += step
+        bar.progress(progress)
+        print(progress)
+    bar.progress(1.0)
+    st.balloons()
     return results
     
 
