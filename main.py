@@ -5,7 +5,6 @@ from shangqi_statistics import auth,read_table,get_result_from_hasura,write_csv,
 import os
 import datetime
 
-
 #统计某个时间段内某个工作池创建量（不去重）
 query_of_created_count = """
 query query_of_created_count($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10) {
@@ -28,30 +27,44 @@ query query_of_distinct_created_count($start_time: timestamptz = "", $end_time: 
 '''
 
 #统计某个时间段内的某个工作池完成量（不去重）
-query_of_finished_count="""
-query query_of_finished_count($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10) {
-task_runs_aggregate(where: {finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and:{task_run_status:{_eq:FINISHED}}}}}) {
-    aggregate {
-    count
-    }
-}
-}
-"""
+# query_of_finished_count="""
+# query query_of_finished_count($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10) {
+# task_runs_aggregate(where: {finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and:{task_run_status:{_eq:FINISHED}}}}}) {
+#     aggregate {
+#     count
+#     }
+# }
+# }
+# """
 
 # 统计某个时间段内的某个工作池完成量并且方向为forward（去重、总量）
 query_of_finished_and_forward_count_all='''
-query query_of_finished_and_forward_count_all($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10){
-  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} }} }}}){
-    aggregate{
+query query_of_finished_and_forward_count_all(
+  $start_time: timestamptz = ""
+  $end_time: timestamptz = ""
+  $pool_ids: [Int!] = 10
+) {
+  tasks_aggregate(
+    where: {
+      task_runs: {
+        finished_at: { _gte: $start_time, _lte: $end_time }
+        pool_id: { _in: $pool_ids }
+        task_run_submit_direction: { _eq: FORWARD }
+        task_run_status: { _in:  [SUBMITTED,FINISHED]}
+      }
+    }
+  ) {
+    aggregate {
       count
     }
   }
-}'''
+}
+'''
 
 # 统计某个时间段内的某个工作池完成量并且方向为forward（去重、还在工作池）
 query_of_finished_and_forward_and_not_moved_count='''
 query query_of_finished_and_forward_and_not_moved_count($start_time: timestamptz = "", $end_time: timestamptz = "", $pool_ids: [Int!] = 10){
-  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} _and:{task_run_status:{_neq:FINISHED}}}} }}}){
+  tasks_aggregate(where:{task_runs:{finished_at: {_gte: $start_time}, _and: {finished_at: {_lte: $end_time}, _and: {pool_id: {_in: $pool_ids} _and: {task_run_submit_direction: {_eq: FORWARD} _and:{task_run_status:{_eq:SUBMITTED}}}} }}}){
     aggregate{
       count
     }
@@ -79,8 +92,6 @@ s_e_p_variables =     {
             35321
         ]
     }
-
-
 start_time =  "2021-10-8 20:00:00"
 end_time =  "2021-10-15 20:00:00"
 confirm_msg = "起始时间为：{}       截止时间为:{}\n".format(start_time,end_time)
@@ -122,7 +133,7 @@ today = str(datetime.date.today())
 yestoday = str(datetime.date.today() - datetime.timedelta(1))
 t1 = st.text_input('开始时间',value=yestoday+' 20:00:00')
 t2 = st.text_input('截止时间',value=today+' 20:00:00')
-project_name = st.text_input("输入项目名称（完全匹配，可选）")
+project_name = st.text_input("输入项目名称（模糊匹配，可选）")
 button_click = st.button("查询",)
 if button_click == True:
     r = run(t1,t2,project_name)

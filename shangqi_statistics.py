@@ -7,6 +7,7 @@ import os
 import numpy as np
 import streamlit as st
 from streamlit.proto.Progress_pb2 import Progress
+import re
 
 def confirm_choice(msg):
     confirm = input("[c]Confirm: {}".format(msg))
@@ -40,13 +41,14 @@ def read_table(url_read,token,col_name,project_name=""):
             frame = int(results[i]["properties"]["帧数"][col_type(results,i,"帧数")][0]["plain_text"])
             # print(frame)
             # print(results[i]["properties"]["项目类型"])
+            print(re.findall(project_name,key),'xxxxx')
             if key not in projects_info.keys():
                 if project_name == "":
                     if frame == 1:
                         projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
                     else:
                         projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"帧"]
-                elif key == project_name:
+                elif re.findall(project_name,key):
                     if frame == 1:
                         projects_info[key] = [list(map(int,re.findall('[0-9]+',value) )),type,frame,"张"] #只取数字，其他都不要
                     else:
@@ -137,7 +139,7 @@ def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variable
     notion_results = read_table(table_url,notion_token,col_name=col_name,project_name=project_name) # 从 notion 读取必要数据
     progress = 0
     bar = st.progress(progress)
-    step = round(1/len(notion_results),3)
+    step = round(1/len(notion_results),3)-0.01
     for k,v in notion_results.items():
         temp = []
         temp_frame = []
