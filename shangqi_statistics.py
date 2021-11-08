@@ -38,7 +38,10 @@ def read_table(url_read,token,col_name,project_name=""):
             key = results[i]["properties"]["项目名"][col_type(results,i,"项目名")][0]["plain_text"]
             value = results[i]["properties"][col_name][col_type(results,i,col_name)][0]["plain_text"]
             type = results[i]["properties"]["项目类型"][col_type(results,i,"项目类型")]["name"]
-            frame = int(results[i]["properties"]["帧数"][col_type(results,i,"帧数")][0]["plain_text"])
+            try:
+                frame = int(results[i]["properties"]["帧数"][col_type(results,i,"帧数")][0]["plain_text"])
+            except:
+                frame = 1
             # print(frame)
             # print(results[i]["properties"]["项目类型"])
             print(re.findall(project_name,key),'xxxxx')
@@ -60,6 +63,7 @@ def read_table(url_read,token,col_name,project_name=""):
                 print("😂")
         except:
             print("🐽") # 只取有效的行，有些空的没填完整的就跳过
+    print("asfdasf",len(projects_info))
     return projects_info
     # print(projects,len(projects))
 
