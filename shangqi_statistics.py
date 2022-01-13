@@ -33,7 +33,7 @@ def read_table(url_read,token,col_name,project_name=""):
     results = r.json()["results"]
     # print(json.dumps(results))
     for i in range(len(results)):
-        # print("😂",results[i]["properties"]["项目名"])
+        # print("😂",results[i]["properties"]["项目ID"])
         try:
             key = results[i]["properties"]["项目名"][col_type(results,i,"项目名")][0]["plain_text"]
             value = results[i]["properties"][col_name][col_type(results,i,col_name)][0]["plain_text"]
@@ -143,7 +143,7 @@ def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variable
     notion_results = read_table(table_url,notion_token,col_name=col_name,project_name=project_name) # 从 notion 读取必要数据
     progress = 0
     bar = st.progress(progress)
-    step = round(1/len(notion_results),3)-0.01
+    step = round(1/len(notion_results),3)
     for k,v in notion_results.items():
         temp = []
         temp_frame = []
@@ -162,7 +162,8 @@ def run_np(auth_file,table_url,col_name,start,end,hasura_queries,hasura_variable
             temp_frame.append(frame_count)
         temp = temp + temp_frame
         results.append(temp)
-        progress += step
+        if progress+step < 1.0:
+            progress += step
         bar.progress(progress)
         print(progress)
     bar.progress(1.0)
